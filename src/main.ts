@@ -25,7 +25,8 @@ async function main() {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("failed to get context");
 
-    const fontSize = 8;
+    const imageWidth = 1024;
+    const fontSize = imageWidth / width;
     const charWidth = fontSize * 1.0;
     const lineHeight = fontSize * 1.0;
 
@@ -34,7 +35,7 @@ async function main() {
 
     ctx.font = `${fontSize}px monospace`;
     ctx.textBaseline = "top";
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "yellow";
 
     let y = 0;
     let x = 0;
