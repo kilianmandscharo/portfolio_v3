@@ -1,0 +1,10 @@
+html {
+    background-color: #eaeaea;
+    box-sizing: border-box;
+}
+
+body {
+    width: 1024px;
+    margin: 0 auto;
+    background-color: #4f6d7a;
+}
