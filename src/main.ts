@@ -103,7 +103,7 @@ function animate(
     numberOfCols: number,
     size: number,
 ) {
-    const timeInMs = 3 * 1000;
+    const timeInMs = 2 * 1000;
     let start: undefined | number;
 
     const targetXOffset = canvas.width / 2 - imageWidth / 2;
