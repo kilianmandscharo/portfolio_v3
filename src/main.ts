@@ -1,4 +1,9 @@
 import "./style.css";
+import "./fonts.css";
+
+type GlyphCache = Map<string, HTMLCanvasElement>;
+
+type Instructions = (number | string)[];
 
 await main();
 
@@ -7,7 +12,7 @@ async function main() {
     if (!res.body) throw new Error("no response body");
 
     const data = await res.text();
-    const instructions: (number | string)[] = [];
+    const instructions: Instructions = [];
     const chars: Set<string> = new Set();
 
     const splitIndex = data.indexOf("\n");
@@ -63,22 +68,50 @@ async function main() {
     const canvasWidth = imageWidth * 6;
 
     const size = canvasWidth / numberOfCols;
-    const targetSize = imageWidth / numberOfCols;
 
     canvas.width = numberOfCols * size;
     canvas.height = numberOfRows * size;
-
-    const targetXOffset = canvas.width / 2 - imageWidth / 2;
-    const targetYOffset = canvas.height / 2 - imageHeight / 2;
 
     ctx.font = "10px monospace";
     ctx.textBaseline = "top";
     ctx.fillStyle = "yellow";
 
-    const timeInMs = 2 * 1000;
+    const container = document.getElementById("container") as HTMLDivElement;
+    if (!container) throw new Error("container not found");
+
+    animate(
+        container,
+        canvas,
+        ctx,
+        instructions,
+        glyphCache,
+        imageWidth,
+        imageHeight,
+        numberOfCols,
+        size,
+    );
+}
+
+function animate(
+    container: HTMLDivElement,
+    canvas: HTMLCanvasElement,
+    ctx: CanvasRenderingContext2D,
+    instructions: Instructions,
+    glyphCache: GlyphCache,
+    imageWidth: number,
+    imageHeight: number,
+    numberOfCols: number,
+    size: number,
+) {
+    const timeInMs = 3 * 1000;
     let start: undefined | number;
 
-    const animate = false;
+    const targetXOffset = canvas.width / 2 - imageWidth / 2;
+    const targetYOffset = canvas.height / 2 - imageHeight / 2;
+    const targetSize = imageWidth / numberOfCols;
+
+    const startTop = 50;
+    const targetTop = 23;
 
     const step = (ts: number) => {
         if (start === undefined) start = ts;
@@ -87,9 +120,14 @@ async function main() {
         if (elapsed > timeInMs) return;
 
         const progress = easeOutCirc(elapsed / timeInMs);
+
         const currentSize = targetSize + (1 - progress) * (size - targetSize);
         const currentXOffset = progress * targetXOffset;
         const currentYOffset = progress * targetYOffset;
+
+        const currentTop = targetTop + (1 - progress) * (startTop - targetTop);
+        console.log(currentTop);
+        container.style.top = `${currentTop}%`;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -103,8 +141,6 @@ async function main() {
             currentYOffset,
         );
 
-        if (!animate) return;
-
         requestAnimationFrame(step);
     };
 
@@ -117,8 +153,8 @@ function easeOutCirc(x: number): number {
 
 function draw(
     ctx: CanvasRenderingContext2D,
-    instructions: (number | string)[],
-    glyphCache: Map<string, HTMLCanvasElement>,
+    instructions: Instructions,
+    glyphCache: GlyphCache,
     size: number,
     numberOfCols: number,
     xOffset: number,
@@ -153,7 +189,7 @@ function buildGlyphCache(
     font: string,
     fillStyle: string,
     cellSize: number,
-): Map<string, HTMLCanvasElement> {
+): GlyphCache {
     const cache = new Map<string, HTMLCanvasElement>();
 
     for (const char of chars) {

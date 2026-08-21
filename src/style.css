@@ -4,10 +4,76 @@ html {
 
 body {
     width: 1024px;
+    height: 100vh;
     margin: 0 auto;
     background-color: #4f6d7a;
     color: beige;
     overflow: hidden;
+}
+
+#container {
+    position: absolute;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    background-color: #4f6d7a;
+    border-radius: 1rem;
+    z-index: 100;
+    padding: 1.5rem 2rem;
+    font-family: "IBM Plex Mono";
+    box-shadow: 2px 2px 8px black;
+}
+
+.separator {
+    width: 2px;
+    background-color: beige;
+    align-self: stretch;
+}
+
+ul {
+    padding: 0;
+}
+
+ul li {
+    list-style: none;
+}
+
+ul li:not(:last-child) {
+    margin-bottom: 0.75rem;
+}
+
+ul li .list-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+ul li .list-container:hover .list-marker {
+    background-color: rebeccapurple;
+}
+
+ul li .list-container:hover a {
+    color: rebeccapurple;
+}
+
+ul li .list-marker {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: beige;
+    transition: background-color ease 0.3s;
+}
+
+ul li a {
+    all: unset;
+    font-size: 1rem;
+    transition: ease 0.3s;
 }
 
 canvas {
