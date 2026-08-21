@@ -7,4 +7,12 @@ body {
     margin: 0 auto;
     background-color: #4f6d7a;
     color: beige;
+    overflow: hidden;
+}
+
+canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
