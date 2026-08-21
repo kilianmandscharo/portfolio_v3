@@ -7,8 +7,33 @@ async function main() {
     if (!res.body) throw new Error("no response body");
 
     const data = await res.text();
+    const instructions: (number | string)[] = [];
+    const chars: Set<string> = new Set();
+
     const splitIndex = data.indexOf("\n");
     if (splitIndex === -1) throw new Error("expected new line in data");
+
+    let i = splitIndex + 1;
+
+    while (i < data.length) {
+        let countString = "";
+        while (data[i] >= "0" && data[i] <= "9") {
+            countString += data[i];
+            i++;
+            if (i == data.length) {
+                throw new Error("reached end while parsing number");
+            }
+        }
+
+        let count = parseInt(countString);
+        if (Number.isNaN(count)) throw new Error("invalid count number");
+
+        const char = data[i++];
+
+        chars.add(char);
+        instructions.push(count);
+        instructions.push(char);
+    }
 
     const [numberOfCols, numberOfRows] = data
         .slice(0, splitIndex)
@@ -24,6 +49,13 @@ async function main() {
 
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("failed to get context");
+
+    const glyphCache = buildGlyphCache(
+        Array.from(chars),
+        "monospace",
+        "yellow",
+        10,
+    );
 
     const imageWidth = 1024;
     const imageHeight = (imageWidth * numberOfRows) / numberOfCols;
@@ -46,6 +78,8 @@ async function main() {
     const timeInMs = 2 * 1000;
     let start: undefined | number;
 
+    const animate = false;
+
     const step = (ts: number) => {
         if (start === undefined) start = ts;
 
@@ -61,13 +95,15 @@ async function main() {
 
         draw(
             ctx,
-            data,
-            splitIndex + 1,
+            instructions,
+            glyphCache,
             currentSize,
             numberOfCols,
             currentXOffset,
             currentYOffset,
         );
+
+        if (!animate) return;
 
         requestAnimationFrame(step);
     };
@@ -81,8 +117,8 @@ function easeOutCirc(x: number): number {
 
 function draw(
     ctx: CanvasRenderingContext2D,
-    data: string,
-    startIndex: number,
+    instructions: (number | string)[],
+    glyphCache: Map<string, HTMLCanvasElement>,
     size: number,
     numberOfCols: number,
     xOffset: number,
@@ -90,24 +126,17 @@ function draw(
 ) {
     let y = 0;
     let x = 0;
-    let i = startIndex;
 
-    while (i < data.length) {
-        let countString = "";
-        while (data[i] >= "0" && data[i] <= "9") {
-            countString += data[i];
-            i++;
-            if (i == data.length) {
-                throw new Error("reached end while parsing number");
-            }
-        }
-
-        let count = parseInt(countString);
-        if (Number.isNaN(count)) throw new Error("invalid count number");
-        const char = data[i++];
+    for (let i = 0; i < instructions.length - 1; i += 2) {
+        let count = instructions[i] as number;
+        const char = instructions[i + 1] as string;
 
         while (count-- > 0) {
-            ctx.fillText(char, x * size + xOffset, y * size + yOffset);
+            ctx.drawImage(
+                glyphCache.get(char)!,
+                x * size + xOffset,
+                y * size + yOffset,
+            );
 
             if (x == numberOfCols - 1) {
                 y++;
@@ -117,4 +146,29 @@ function draw(
             }
         }
     }
+}
+
+function buildGlyphCache(
+    chars: string[],
+    font: string,
+    fillStyle: string,
+    cellSize: number,
+): Map<string, HTMLCanvasElement> {
+    const cache = new Map<string, HTMLCanvasElement>();
+
+    for (const char of chars) {
+        const glyphCanvas = document.createElement("canvas");
+        glyphCanvas.width = cellSize;
+        glyphCanvas.height = cellSize;
+
+        const gctx = glyphCanvas.getContext("2d")!;
+        gctx.font = font;
+        gctx.textBaseline = "top";
+        gctx.fillStyle = fillStyle;
+        gctx.fillText(char, 0, 0);
+
+        cache.set(char, glyphCanvas);
+    }
+
+    return cache;
 }
