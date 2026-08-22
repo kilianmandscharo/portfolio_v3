@@ -3,12 +3,17 @@ html {
 }
 
 body {
-    width: 1024px;
-    height: 100vh;
     margin: 0 auto;
     background-color: #4f6d7a;
     color: beige;
     overflow: hidden;
+}
+
+canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #container {
@@ -27,6 +32,19 @@ body {
     padding: 1.5rem 2rem;
     font-family: "IBM Plex Mono";
     box-shadow: 2px 2px 8px black;
+}
+
+#star-fall {
+    background: none;
+    border: none;
+    position: absolute;
+    font-family: "IBM Plex Mono";
+    font-style: italic;
+    z-index: 100;
+    color: beige;
+    cursor: pointer;
+    top: 0.5rem;
+    left: 0.5rem;
 }
 
 .separator {
@@ -74,11 +92,4 @@ ul li a {
     all: unset;
     font-size: 1rem;
     transition: ease 0.3s;
-}
-
-canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
 }
