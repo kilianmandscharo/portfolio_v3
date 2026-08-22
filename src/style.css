@@ -20,8 +20,8 @@ canvas {
     position: absolute;
     position: absolute;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    right: 50%;
+    transform: translate(50%, -50%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -29,9 +29,10 @@ canvas {
     background-color: #4f6d7a;
     border-radius: 1rem;
     z-index: 100;
-    padding: 1.5rem 2rem;
     font-family: "IBM Plex Mono";
     box-shadow: 2px 2px 8px black;
+    width: 570px;
+    height: 280px;
 }
 
 #star-fall {
@@ -51,6 +52,8 @@ canvas {
     width: 2px;
     background-color: beige;
     align-self: stretch;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 ul {

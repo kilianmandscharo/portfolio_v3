@@ -274,17 +274,14 @@ function animateStarFall(
         el.visible = true;
     }
 
+    container.innerHTML = "<div id='container'><h1>Dominik Heller</h1></div>";
+
     const timeInMs = 2 * 1000;
     let start: undefined | number;
 
     const targetXOffset = canvas.width / 2 - imageWidth / 2;
     const targetYOffset = canvas.height / 2 - imageHeight / 2;
     const targetSize = imageWidth / numberOfCols;
-
-    const startTop = 50;
-    const startRight = 50;
-    const targetTop = 0;
-    const targetRight = 0;
 
     const step = (ts: number) => {
         if (start === undefined) start = ts;
@@ -294,16 +291,14 @@ function animateStarFall(
 
         const progress = easeOutCirc(elapsed / timeInMs);
 
-        const currentSize = targetSize + (1 - progress) * (size - targetSize);
+        const currentSize = interpolate(size, targetSize, progress);
         const currentXOffset = progress * targetXOffset;
         const currentYOffset = progress * targetYOffset;
 
-        const currentTop = targetTop + (1 - progress) * (startTop - targetTop);
-        const currentRight =
-            targetRight + (1 - progress) * (startRight - targetRight);
-
-        container.style.top = `${currentTop}%`;
-        container.style.right = `${currentRight}%`;
+        container.style.top = `${interpolate(50, 18, progress)}%`;
+        container.style.right = `${interpolate(50, 16, progress)}%`;
+        container.style.width = `${interpolate(570, 200, progress)}px`;
+        container.style.height = `${interpolate(280, 100, progress)}px`;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -325,6 +320,10 @@ function animateStarFall(
     };
 
     requestAnimationFrame(step);
+}
+
+function interpolate(start: number, end: number, progress: number): number {
+    return start + progress * (end - start);
 }
 
 function easeOutCirc(x: number): number {
