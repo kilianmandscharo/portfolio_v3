@@ -16,7 +16,7 @@ canvas {
     transform: translate(-50%, -50%);
 }
 
-#container {
+#container-large {
     position: absolute;
     position: absolute;
     top: 50%;
@@ -35,6 +35,98 @@ canvas {
     height: 280px;
 }
 
+#container-large .list a {
+    cursor: pointer;
+}
+
+#container-large .separator {
+    width: 2px;
+    background-color: beige;
+    align-self: stretch;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+#container-large .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#container-large .list a {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: color 0.25s ease;
+}
+
+#container-large .list a:hover {
+    color: rebeccapurple;
+}
+
+#container-large.fade-out {
+    animation: 0.25s linear fade-out forwards;
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+#container-small {
+    font-family: "IBM Plex Mono";
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    z-index: 100;
+    opacity: 0;
+}
+
+#container-small .list {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#container-small h1 {
+    font-size: 1.5rem;
+}
+
+#container-small .separator {
+    width: 2px;
+    background-color: beige;
+    align-self: stretch;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+#container-small.fade-in {
+    animation: 0.25s linear fade-in forwards;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 #star-fall {
     background: none;
     border: none;
@@ -46,53 +138,4 @@ canvas {
     cursor: pointer;
     top: 0.5rem;
     left: 0.5rem;
-}
-
-.separator {
-    width: 2px;
-    background-color: beige;
-    align-self: stretch;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-ul {
-    padding: 0;
-}
-
-ul li {
-    list-style: none;
-}
-
-ul li:not(:last-child) {
-    margin-bottom: 0.75rem;
-}
-
-ul li .list-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-}
-
-ul li .list-container:hover .list-marker {
-    background-color: rebeccapurple;
-}
-
-ul li .list-container:hover a {
-    color: rebeccapurple;
-}
-
-ul li .list-marker {
-    width: 1rem;
-    height: 1rem;
-    border-radius: 50%;
-    background-color: beige;
-    transition: background-color ease 0.3s;
-}
-
-ul li a {
-    all: unset;
-    font-size: 1rem;
-    transition: ease 0.3s;
 }

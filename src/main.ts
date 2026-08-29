@@ -48,7 +48,9 @@ async function main() {
     const windowX2 = windowX1 + windowWidth;
     const windowY2 = windowY1 + windowHeight;
 
-    const container = document.getElementById("container") as HTMLDivElement;
+    const container = document.getElementById(
+        "container-large",
+    ) as HTMLDivElement;
     if (!container) throw new Error("container not found");
 
     const glyphCache = buildGlyphCache(
@@ -59,7 +61,6 @@ async function main() {
     );
 
     createButton(
-        container,
         canvas,
         ctx,
         data,
@@ -93,7 +94,6 @@ function getState(): State {
 }
 
 function createButton(
-    container: HTMLDivElement,
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     data: DataPoint[],
@@ -113,7 +113,6 @@ function createButton(
     button.addEventListener("click", () => {
         getState().animateBlinking = false;
         animateStarFall(
-            container,
             canvas,
             ctx,
             data,
@@ -256,7 +255,6 @@ function animateBlinking(
 }
 
 function animateStarFall(
-    container: HTMLDivElement,
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     data: DataPoint[],
@@ -270,11 +268,21 @@ function animateStarFall(
     windowY1: number,
     windowY2: number,
 ) {
+    const containerLarge = document.getElementById(
+        "container-large",
+    ) as HTMLDivElement;
+    containerLarge.className = "fade-out";
+
+    setTimeout(() => {
+        const containerSmall = document.getElementById(
+            "container-small",
+        ) as HTMLDivElement;
+        containerSmall.className = "fade-in";
+    }, 2000);
+
     for (const el of data) {
         el.visible = true;
     }
-
-    container.innerHTML = "<div id='container'><h1>Dominik Heller</h1></div>";
 
     const timeInMs = 2 * 1000;
     let start: undefined | number;
@@ -294,11 +302,6 @@ function animateStarFall(
         const currentSize = interpolate(size, targetSize, progress);
         const currentXOffset = progress * targetXOffset;
         const currentYOffset = progress * targetYOffset;
-
-        container.style.top = `${interpolate(50, 18, progress)}%`;
-        container.style.right = `${interpolate(50, 16, progress)}%`;
-        container.style.width = `${interpolate(570, 200, progress)}px`;
-        container.style.height = `${interpolate(280, 100, progress)}px`;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
