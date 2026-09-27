@@ -11,47 +11,56 @@ type DataPoint = {
 
 type State = {
     animateBlinking: boolean;
+    isAnimating: boolean;
+    haveStarsFallen: boolean;
+    viewport: {
+        x1: number;
+        x2: number;
+        y1: number;
+        y2: number;
+    };
+    glyphCache: GlyphCache;
+    image: {
+        width: number;
+        height: number;
+        numberOfCols: number;
+    };
+    data: DataPoint[];
+    canvas: {
+        element: HTMLCanvasElement;
+        ctx: CanvasRenderingContext2D;
+    };
 };
 
 type CustomWindow = typeof globalThis & { state: State };
 
 const CHAR_COLOR = "yellow";
+const CONTAINER_LARGE = "container-large";
+const CONTAINER_SMALL = "container-small";
 
 await main();
 
 async function main() {
     const { numberOfCols, numberOfRows, data, charSet } = await getData();
-    const { canvas, ctx } = createCanvas();
-
-    (window as unknown as CustomWindow).state = {
-        animateBlinking: true,
-    };
 
     const imageWidth = 1024;
     const imageHeight = (imageWidth * numberOfRows) / numberOfCols;
+    const image = {
+        width: imageWidth,
+        height: imageHeight,
+        numberOfCols,
+    };
+
+    const canvas = createCanvas();
 
     const canvasWidth = imageWidth * 6;
-
     const size = canvasWidth / numberOfCols;
+    canvas.element.width = numberOfCols * size;
+    canvas.element.height = numberOfRows * size;
+    canvas.ctx.textBaseline = "top";
+    canvas.ctx.fillStyle = CHAR_COLOR;
 
-    canvas.width = numberOfCols * size;
-    canvas.height = numberOfRows * size;
-
-    ctx.textBaseline = "top";
-    ctx.fillStyle = CHAR_COLOR;
-
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const windowX1 = (canvas.width - windowWidth) / 2;
-    const windowY1 = (canvas.height - windowHeight) / 2;
-    const windowX2 = windowX1 + windowWidth;
-    const windowY2 = windowY1 + windowHeight;
-
-    const container = document.getElementById(
-        "container-large",
-    ) as HTMLDivElement;
-    if (!container) throw new Error("container not found");
+    const viewport = getViewportDimensions(canvas.element);
 
     const glyphCache = buildGlyphCache(
         Array.from(charSet),
@@ -60,78 +69,65 @@ async function main() {
         10,
     );
 
-    createButton(
-        canvas,
-        ctx,
-        data,
+    initState({
+        animateBlinking: true,
+        isAnimating: false,
+        haveStarsFallen: false,
+        viewport,
         glyphCache,
-        imageWidth,
-        imageHeight,
-        numberOfCols,
-        size,
-        windowX1,
-        windowX2,
-        windowY1,
-        windowY2,
-    );
+        image,
+        data,
+        canvas,
+    });
 
-    animateBlinking(
-        canvas,
-        ctx,
-        data,
-        glyphCache,
-        numberOfCols,
-        size,
-        windowX1,
-        windowX2,
-        windowY1,
-        windowY2,
-    );
+    createButton(size);
+    animateBlinking(size);
 }
 
 function getState(): State {
     return (window as unknown as CustomWindow).state;
 }
 
-function createButton(
-    canvas: HTMLCanvasElement,
-    ctx: CanvasRenderingContext2D,
-    data: DataPoint[],
-    glyphCache: GlyphCache,
-    imageWidth: number,
-    imageHeight: number,
-    numberOfCols: number,
-    size: number,
-    windowX1: number,
-    windowX2: number,
-    windowY1: number,
-    windowY2: number,
-): void {
+function initState(state: State): void {
+    (window as unknown as CustomWindow).state = state;
+}
+
+function createButton(size: number): void {
     const button = document.createElement("button");
+
     button.innerHTML = "God how the stars did fall.";
     button.id = "star-fall";
     button.addEventListener("click", () => {
-        getState().animateBlinking = false;
-        animateStarFall(
-            canvas,
-            ctx,
-            data,
-            glyphCache,
-            imageWidth,
-            imageHeight,
-            numberOfCols,
-            size,
-            windowX1,
-            windowX2,
-            windowY1,
-            windowY2,
-        );
+        const state = getState();
+        if (state.isAnimating) {
+            return;
+        }
+        state.isAnimating = true;
+        state.animateBlinking = false;
+        animateStarFall(size, state.haveStarsFallen ? "out" : "in");
     });
     document.body.appendChild(button);
 }
 
+function getViewportDimensions(canvas: HTMLCanvasElement) {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const x1 = (canvas.width - windowWidth) / 2;
+    const y1 = (canvas.height - windowHeight) / 2;
+    const x2 = x1 + windowWidth;
+    const y2 = y1 + windowHeight;
+
+    return {
+        x1,
+        x2,
+        y1,
+        y2,
+    };
+}
+
 function createCanvas(): {
-    canvas: HTMLCanvasElement;
+    element: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
 } {
     const canvas = document.createElement("canvas");
@@ -141,7 +137,7 @@ function createCanvas(): {
     if (!ctx) throw new Error("failed to get context");
 
     return {
-        canvas,
+        element: canvas,
         ctx,
     };
 }
@@ -211,42 +207,22 @@ async function getData(): Promise<{
     };
 }
 
-function animateBlinking(
-    canvas: HTMLCanvasElement,
-    ctx: CanvasRenderingContext2D,
-    data: DataPoint[],
-    glyphCache: GlyphCache,
-    numberOfCols: number,
-    size: number,
-    windowX1: number,
-    windowX2: number,
-    windowY1: number,
-    windowY2: number,
-) {
+function animateBlinking(size: number) {
+    const { canvas } = getState();
     let start: undefined | number;
 
     const step = (ts: number) => {
-        if (!getState().animateBlinking) return;
+        if (!getState().animateBlinking) {
+            return;
+        }
+
         if (start === undefined) start = ts;
 
         const elapsed = (ts - start) / 1000;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.ctx.clearRect(0, 0, canvas.element.width, canvas.element.height);
 
-        draw(
-            ctx,
-            data,
-            glyphCache,
-            size,
-            numberOfCols,
-            0,
-            0,
-            windowX1,
-            windowX2,
-            windowY1,
-            windowY2,
-            elapsed,
-        );
+        draw(size, 0, 0, elapsed);
 
         requestAnimationFrame(step);
     };
@@ -254,30 +230,23 @@ function animateBlinking(
     requestAnimationFrame(step);
 }
 
-function animateStarFall(
-    canvas: HTMLCanvasElement,
-    ctx: CanvasRenderingContext2D,
-    data: DataPoint[],
-    glyphCache: GlyphCache,
-    imageWidth: number,
-    imageHeight: number,
-    numberOfCols: number,
-    size: number,
-    windowX1: number,
-    windowX2: number,
-    windowY1: number,
-    windowY2: number,
-) {
-    const containerLarge = document.getElementById(
-        "container-large",
-    ) as HTMLDivElement;
-    containerLarge.className = "fade-out";
+function fadeIn(id: string) {
+    const el = document.getElementById(id) as HTMLDivElement;
+    el.className = "fade-in";
+}
+
+function fadeOut(id: string) {
+    const el = document.getElementById(id) as HTMLDivElement;
+    el.className = "fade-out";
+}
+
+function animateStarFall(size: number, direction: "in" | "out") {
+    const { image, data, canvas } = getState();
+
+    fadeOut(direction === "in" ? CONTAINER_LARGE : CONTAINER_SMALL);
 
     setTimeout(() => {
-        const containerSmall = document.getElementById(
-            "container-small",
-        ) as HTMLDivElement;
-        containerSmall.className = "fade-in";
+        fadeIn(direction === "in" ? CONTAINER_SMALL : CONTAINER_LARGE);
     }, 2000);
 
     for (const el of data) {
@@ -287,37 +256,33 @@ function animateStarFall(
     const timeInMs = 2 * 1000;
     let start: undefined | number;
 
-    const targetXOffset = canvas.width / 2 - imageWidth / 2;
-    const targetYOffset = canvas.height / 2 - imageHeight / 2;
-    const targetSize = imageWidth / numberOfCols;
+    const targetXOffset = canvas.element.width / 2 - image.width / 2;
+    const targetYOffset = canvas.element.height / 2 - image.height / 2;
+    const targetSize = image.width / image.numberOfCols;
 
     const step = (ts: number) => {
         if (start === undefined) start = ts;
 
         const elapsed = ts - start;
-        if (elapsed > timeInMs) return;
+        if (elapsed > timeInMs) {
+            const state = getState();
+            state.isAnimating = false;
+            state.haveStarsFallen = !state.haveStarsFallen;
+            return;
+        }
 
-        const progress = easeOutCirc(elapsed / timeInMs);
+        const progress =
+            direction === "in"
+                ? easeOutCirc(elapsed / timeInMs)
+                : 1 - easeOutCirc(elapsed / timeInMs);
 
         const currentSize = interpolate(size, targetSize, progress);
         const currentXOffset = progress * targetXOffset;
         const currentYOffset = progress * targetYOffset;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.ctx.clearRect(0, 0, canvas.element.width, canvas.element.height);
 
-        draw(
-            ctx,
-            data,
-            glyphCache,
-            currentSize,
-            numberOfCols,
-            currentXOffset,
-            currentYOffset,
-            windowX1,
-            windowX2,
-            windowY1,
-            windowY2,
-        );
+        draw(currentSize, currentXOffset, currentYOffset);
 
         requestAnimationFrame(step);
     };
@@ -333,20 +298,10 @@ function easeOutCirc(x: number): number {
     return Math.sqrt(1 - Math.pow(x - 1, 2));
 }
 
-function draw(
-    ctx: CanvasRenderingContext2D,
-    data: DataPoint[],
-    glyphCache: GlyphCache,
-    size: number,
-    numberOfCols: number,
-    xOffset: number,
-    yOffset: number,
-    windowX1: number,
-    windowX2: number,
-    windowY1: number,
-    windowY2: number,
-    time?: number,
-) {
+function draw(size: number, xOffset: number, yOffset: number, time?: number) {
+    const { viewport, data, glyphCache, canvas, image } = getState();
+    console.log(getState());
+
     let row = 0;
     let col = 0;
 
@@ -355,7 +310,10 @@ function draw(
         const y = row * size + yOffset;
 
         const outOfBounds =
-            x < windowX1 || x > windowX2 || y < windowY1 || y > windowY2;
+            x < viewport.x1 ||
+            x > viewport.x2 ||
+            y < viewport.y1 ||
+            y > viewport.y2;
 
         if (!outOfBounds && el.visible) {
             const alpha = time
@@ -363,11 +321,17 @@ function draw(
                 : null;
             const charSize = time ? 2 * Math.sin(el.frequency * time) + 8 : 10;
 
-            ctx.globalAlpha = alpha ?? 1;
-            ctx.drawImage(glyphCache.get(el.char)!, x, y, charSize, charSize);
+            canvas.ctx.globalAlpha = alpha ?? 1;
+            canvas.ctx.drawImage(
+                glyphCache.get(el.char)!,
+                x,
+                y,
+                charSize,
+                charSize,
+            );
         }
 
-        if (col == numberOfCols - 1) {
+        if (col == image.numberOfCols - 1) {
             row++;
             col = 0;
         } else {
